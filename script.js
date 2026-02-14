@@ -35,17 +35,23 @@ class SoundManager {
             window.AudioContext = window.AudioContext || window.webkitAudioContext;
             this.audioContext = new AudioContext();
 
-            // Start background music immediately on page load
-            if (this.audioContext.state === 'suspended') {
-                // If suspended, resume on first user interaction
-                document.addEventListener('click', () => {
-                    if (this.audioContext && this.audioContext.state === 'suspended') {
-                        this.audioContext.resume();
-                    }
-                }, { once: true });
-            } else {
-                // Start right away if not suspended
+            // Try to start background music immediately
+            if (this.audioContext.state === 'running') {
                 this.startBackgroundMusic();
+            } else if (this.audioContext.state === 'suspended') {
+                // If suspended, set up to resume on first interaction
+                const resumeAudio = () => {
+                    if (this.audioContext && this.audioContext.state === 'suspended') {
+                        this.audioContext.resume().then(() => {
+                            this.startBackgroundMusic();
+                        });
+                    }
+                    document.removeEventListener('click', resumeAudio);
+                    document.removeEventListener('touchstart', resumeAudio);
+                };
+
+                document.addEventListener('click', resumeAudio);
+                document.addEventListener('touchstart', resumeAudio);
             }
         } catch (e) {
             console.log('Web Audio API not supported');
@@ -156,9 +162,179 @@ class SoundManager {
             });
         } catch (e) {}
     }
+
+    playVictoryHorn() {
+        try {
+            const ctx = this.audioContext;
+            const now = ctx.currentTime;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            // Trumpet-like blare effect
+            // Start low, sweep up to peak, slight drop at end
+            osc.frequency.setValueAtTime(200, now);
+            osc.frequency.exponentialRampToValueAtTime(800, now + 0.4);  // Sweep up
+            osc.frequency.exponentialRampToValueAtTime(600, now + 0.9);  // Slight drop
+
+            // Sharp attack, quick decay
+            gain.gain.setValueAtTime(0, now);
+            gain.gain.linearRampToValueAtTime(0.15, now + 0.05);  // Quick attack
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.9);  // Quick decay
+
+            osc.start(now);
+            osc.stop(now + 0.9);
+        } catch (e) {}
+    }
+}
+
+// ===== CONFETTI MANAGER =====
+class ConfettiManager {
+    constructor() {
+        this.canvas = document.getElementById('confetti-canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.particles = [];
+        this.animationId = null;
+
+        // Set canvas to window size
+        this.resizeCanvas();
+        window.addEventListener('resize', () => this.resizeCanvas());
+    }
+
+    resizeCanvas() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+    }
+
+    createParticles() {
+        const particleCount = 40;
+        const colors = ['#FF1493', '#FF69B4', '#FFB6C1', '#FF6B6B', '#FFE6E6'];
+
+        for (let i = 0; i < particleCount; i++) {
+            const angle = (Math.PI * 2 * i) / particleCount;
+            const velocity = 5 + Math.random() * 5;
+
+            this.particles.push({
+                x: this.canvas.width / 2,
+                y: this.canvas.height / 2,
+                vx: Math.cos(angle) * velocity,
+                vy: Math.sin(angle) * velocity - 3,  // Bias upward
+                life: 1,
+                size: 8 + Math.random() * 8,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                rotation: Math.random() * Math.PI * 2,
+                rotationSpeed: (Math.random() - 0.5) * 0.1
+            });
+        }
+    }
+
+    animate() {
+        // Clear canvas
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Update and draw particles
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+            const p = this.particles[i];
+
+            // Physics
+            p.vy += 0.15;  // Gravity
+            p.vx *= 0.99;  // Air resistance
+            p.x += p.vx;
+            p.y += p.vy;
+            p.life -= 0.01;
+            p.rotation += p.rotationSpeed;
+
+            // Draw particle
+            this.ctx.save();
+            this.ctx.globalAlpha = p.life;
+            this.ctx.fillStyle = p.color;
+            this.ctx.translate(p.x, p.y);
+            this.ctx.rotate(p.rotation);
+
+            if (p.isHeart) {
+                // Draw heart symbol
+                this.ctx.font = `bold ${p.size}px Arial`;
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                this.ctx.fillText('♥', 0, 0);
+            } else {
+                // Draw square confetti
+                this.ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+            }
+
+            this.ctx.restore();
+
+            // Remove dead particles
+            if (p.life <= 0) {
+                this.particles.splice(i, 1);
+            }
+        }
+
+        // Continue animation if particles remain
+        if (this.particles.length > 0) {
+            this.animationId = requestAnimationFrame(() => this.animate());
+        }
+    }
+
+    start() {
+        // Cancel any existing animation
+        if (this.animationId) {
+            cancelAnimationFrame(this.animationId);
+        }
+
+        // Clear particles and canvas
+        this.particles = [];
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Create confetti particles
+        this.createParticles();
+
+        // Also create heart particles from board area
+        this.createHeartParticles();
+
+        this.animate();
+    }
+
+    createHeartParticles() {
+        const heartCount = 30;
+        const board = document.querySelector('.board');
+        const boardRect = board.getBoundingClientRect();
+        const boardCenterX = boardRect.left + boardRect.width / 2;
+        const boardCenterY = boardRect.top + boardRect.height / 2;
+
+        for (let i = 0; i < heartCount; i++) {
+            const angle = (Math.PI * 2 * i) / heartCount;
+            const velocity = 3 + Math.random() * 4;
+
+            this.particles.push({
+                x: boardCenterX,
+                y: boardCenterY,
+                vx: Math.cos(angle) * velocity,
+                vy: Math.sin(angle) * velocity - 2,
+                life: 1,
+                size: 12 + Math.random() * 8,
+                color: '#FFB6C1',
+                rotation: Math.random() * Math.PI * 2,
+                rotationSpeed: (Math.random() - 0.5) * 0.15,
+                isHeart: true
+            });
+        }
+    }
+
+    stop() {
+        if (this.animationId) {
+            cancelAnimationFrame(this.animationId);
+            this.animationId = null;
+        }
+        this.particles = [];
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    }
 }
 
 const soundManager = new SoundManager();
+const confettiManager = new ConfettiManager();
 
 function renderBoard() {
     cells.forEach((cell, index) => {
@@ -283,7 +459,16 @@ function playWinAnimation(winningCells) {
         cell.classList.add('winning');
     });
 
-    soundManager.playWin();
+    // Show victory text
+    const victoryText = document.getElementById('victoryText');
+    victoryText.classList.add('show');
+
+    // Trigger confetti
+    confettiManager.start();
+
+    // Play victory sounds
+    soundManager.playWin();  // Victory chord
+    soundManager.playVictoryHorn();  // Trumpet-like horn sound
 }
 
 async function handleCellClick(index) {
@@ -342,6 +527,14 @@ function resetGame() {
     gameState.winner = null;
 
     board.classList.remove('winner');
+
+    // Hide victory text
+    const victoryText = document.getElementById('victoryText');
+    victoryText.classList.remove('show');
+
+    // Stop confetti
+    confettiManager.stop();
+
     renderBoard();
 }
 

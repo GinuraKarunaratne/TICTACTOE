@@ -7,6 +7,21 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- Confetti canvas -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Floating background hearts -->
+    <div class="floating-hearts">
+        <div class="float-heart">♥</div>
+        <div class="float-heart">♥</div>
+        <div class="float-heart">♥</div>
+        <div class="float-heart">♥</div>
+        <div class="float-heart">♥</div>
+        <div class="float-heart">♥</div>
+        <div class="float-heart">♥</div>
+        <div class="float-heart">♥</div>
+    </div>
+
     <!-- Floating background flowers -->
     <div class="floating-flowers">
         <div class="float-flower">🌸</div>
@@ -16,6 +31,15 @@
     </div>
 
     <div class="game-container">
+        <div class="victory-text" id="victoryText">
+            <span class="letter">V</span>
+            <span class="letter">I</span>
+            <span class="letter">C</span>
+            <span class="letter">T</span>
+            <span class="letter">O</span>
+            <span class="letter">R</span>
+            <span class="letter">Y</span>
+        </div>
         <div class="board-wrapper">
             <div class="board">
                 <div class="cell" data-index="0"></div>

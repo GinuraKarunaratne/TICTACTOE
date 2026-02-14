@@ -72,6 +72,92 @@ body {
     }
 }
 
+/* Floating background hearts */
+.floating-hearts {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.float-heart {
+    position: fixed;
+    opacity: 0.08;
+    animation: float-up linear infinite;
+    pointer-events: none;
+    filter: blur(1px);
+    color: #FFB6C1;
+    font-weight: bold;
+}
+
+.float-heart:nth-child(1) {
+    left: 8%;
+    animation-duration: 25s;
+    animation-delay: 0s;
+    font-size: 45px;
+    opacity: 0.07;
+}
+
+.float-heart:nth-child(2) {
+    left: 18%;
+    animation-duration: 30s;
+    animation-delay: -5s;
+    font-size: 65px;
+    opacity: 0.09;
+}
+
+.float-heart:nth-child(3) {
+    left: 35%;
+    animation-duration: 35s;
+    animation-delay: -10s;
+    font-size: 55px;
+    opacity: 0.08;
+}
+
+.float-heart:nth-child(4) {
+    left: 52%;
+    animation-duration: 28s;
+    animation-delay: -3s;
+    font-size: 75px;
+    opacity: 0.1;
+}
+
+.float-heart:nth-child(5) {
+    left: 68%;
+    animation-duration: 32s;
+    animation-delay: -8s;
+    font-size: 50px;
+    opacity: 0.08;
+}
+
+.float-heart:nth-child(6) {
+    left: 80%;
+    animation-duration: 27s;
+    animation-delay: -12s;
+    font-size: 60px;
+    opacity: 0.09;
+}
+
+.float-heart:nth-child(7) {
+    left: 92%;
+    animation-duration: 33s;
+    animation-delay: -7s;
+    font-size: 70px;
+    opacity: 0.07;
+}
+
+.float-heart:nth-child(8) {
+    left: 15%;
+    animation-duration: 29s;
+    animation-delay: -15s;
+    font-size: 40px;
+    opacity: 0.08;
+}
+
 .game-container {
     display: flex;
     flex-direction: column;
@@ -81,38 +167,62 @@ body {
     z-index: 10;
 }
 
-/* Decorative elements around the board */
-.decoration {
-    position: absolute;
-    font-size: 28px;
+/* Confetti canvas */
+#confetti-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     pointer-events: none;
+    z-index: 9;
 }
 
-.decoration.top-left {
-    top: -35px;
-    left: -30px;
-}
-
-.decoration.top-center {
-    top: -40px;
+/* Victory text animation */
+.victory-text {
+    display: none;
+    position: absolute;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
-    font-size: 24px;
+    transform: translate(-50%, -50%);
+    font-size: 120px;
+    font-weight: 900;
+    letter-spacing: 12px;
+    color: #FF1493;
+    z-index: 15;
+    text-shadow: 0 6px 30px rgba(255, 20, 147, 0.6);
 }
 
-.decoration.top-right {
-    top: -35px;
-    right: -30px;
+.victory-text.show {
+    display: flex;
+    gap: 8px;
 }
 
-.decoration.bottom-left {
-    bottom: -35px;
-    left: -30px;
+.victory-text .letter {
+    display: inline-block;
+    animation: letter-bounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
 }
 
-.decoration.bottom-right {
-    bottom: -35px;
-    right: -30px;
+.victory-text .letter:nth-child(1) { animation-delay: 0s; }
+.victory-text .letter:nth-child(2) { animation-delay: 0.1s; }
+.victory-text .letter:nth-child(3) { animation-delay: 0.2s; }
+.victory-text .letter:nth-child(4) { animation-delay: 0.3s; }
+.victory-text .letter:nth-child(5) { animation-delay: 0.4s; }
+.victory-text .letter:nth-child(6) { animation-delay: 0.5s; }
+.victory-text .letter:nth-child(7) { animation-delay: 0.6s; }
+
+@keyframes letter-bounce {
+    0% {
+        transform: scale(0) translateY(50px);
+        opacity: 0;
+    }
+    70% {
+        transform: scale(1.15) translateY(-10px);
+    }
+    100% {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
 }
 
 .board-wrapper {
@@ -134,6 +244,7 @@ body {
 
 .board.winner {
     animation: victory-shake 0.5s ease-out;
+    filter: blur(3px);
 }
 
 @keyframes victory-shake {
@@ -280,5 +391,93 @@ body {
         grid-template-columns: repeat(3, 80px);
         gap: 6px;
         padding: 12px;
+    }
+
+    .victory-text {
+        font-size: 70px;
+        letter-spacing: 6px;
+    }
+
+    .float-heart {
+        filter: blur(0.5px);
+    }
+
+    .float-flower {
+        font-size: 40px;
+    }
+
+    .retry-btn {
+        padding: 10px 25px;
+        font-size: 14px;
+    }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+    .cell {
+        width: 90px;
+        height: 90px;
+        font-size: 45px;
+    }
+
+    .board {
+        grid-template-columns: repeat(3, 90px);
+        gap: 7px;
+        padding: 13px;
+    }
+
+    .victory-text {
+        font-size: 95px;
+        letter-spacing: 10px;
+    }
+
+    .float-heart {
+        filter: blur(0.8px);
+    }
+
+    .retry-btn {
+        padding: 11px 28px;
+        font-size: 15px;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    .victory-text {
+        font-size: 110px;
+        letter-spacing: 11px;
+    }
+
+    .float-heart {
+        filter: blur(1.2px);
+    }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+    .game-container {
+        gap: 15px;
+    }
+
+    .board {
+        padding: 10px;
+        gap: 5px;
+    }
+
+    .cell {
+        width: 70px;
+        height: 70px;
+        font-size: 35px;
+    }
+
+    .victory-text {
+        font-size: 60px;
+        letter-spacing: 5px;
+    }
+
+    .retry-btn {
+        padding: 8px 20px;
+        font-size: 12px;
+    }
+
+    .float-heart {
+        filter: blur(0.5px);
     }
 }
