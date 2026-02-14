@@ -1,0 +1,16 @@
+PLACEHOLDER - Replace this file with your actual background music
+
+The game is now configured to load background music from: bg-music.mp3
+
+To add your background music:
+1. Place your MP3 audio file in this folder (same directory as index.html)
+2. Name it: bg-music.mp3
+3. The music will automatically start playing when the page loads
+4. Volume is set to 30% (0.3) - adjust in script.js if needed
+
+The music will:
+- Loop continuously
+- Start playing on page load (or first user interaction if autoplay is blocked)
+- Continue through the entire game session
+
+Audio format supported: MP3 (other formats like WAV, OGG also work - just update the file extension and type in index.html if needed)

@@ -25,9 +25,9 @@ class SoundManager {
     constructor() {
         this.audioContext = null;
         this.enabled = true;
-        this.backgroundOscillator = null;
-        this.backgroundGain = null;
+        this.bgMusicElement = document.getElementById('bg-music');
         this.initAudioContext();
+        this.startBackgroundMusic();
     }
 
     initAudioContext() {
@@ -35,16 +35,11 @@ class SoundManager {
             window.AudioContext = window.AudioContext || window.webkitAudioContext;
             this.audioContext = new AudioContext();
 
-            // Try to start background music immediately
-            if (this.audioContext.state === 'running') {
-                this.startBackgroundMusic();
-            } else if (this.audioContext.state === 'suspended') {
-                // If suspended, set up to resume on first interaction
+            // Resume audio context on first interaction if needed
+            if (this.audioContext.state === 'suspended') {
                 const resumeAudio = () => {
                     if (this.audioContext && this.audioContext.state === 'suspended') {
-                        this.audioContext.resume().then(() => {
-                            this.startBackgroundMusic();
-                        });
+                        this.audioContext.resume();
                     }
                     document.removeEventListener('click', resumeAudio);
                     document.removeEventListener('touchstart', resumeAudio);
@@ -59,50 +54,31 @@ class SoundManager {
     }
 
     startBackgroundMusic() {
-        if (!this.enabled || !this.audioContext) return;
+        if (!this.bgMusicElement) return;
 
         try {
-            const ctx = this.audioContext;
-            const now = ctx.currentTime;
+            // Set volume and try to play
+            this.bgMusicElement.volume = 0.3;
+            const playPromise = this.bgMusicElement.play();
 
-            // Create ambient harmonic layers
-            const notes = [110, 165, 220]; // A3, E4, A4 - peaceful harmonic
-            const oscillators = [];
-            const gains = [];
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    // Autoplay was prevented, will play on first user interaction
+                    console.log('Background music waiting for user interaction');
+                    const startOnInteraction = () => {
+                        this.bgMusicElement.play().catch(err => {
+                            console.log('Could not play background music');
+                        });
+                        document.removeEventListener('click', startOnInteraction);
+                        document.removeEventListener('touchstart', startOnInteraction);
+                    };
 
-            notes.forEach((freq, index) => {
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(freq, now);
-
-                // Gentle volume for each layer
-                const volumes = [0.06, 0.04, 0.03];
-                gain.gain.setValueAtTime(volumes[index], now);
-
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-
-                // Add subtle LFO to each layer for movement
-                const lfo = ctx.createOscillator();
-                const lfoGain = ctx.createGain();
-                lfo.frequency.value = 0.15 + (index * 0.05); // Different speeds for each
-                lfoGain.gain.setValueAtTime(2, now);
-                lfo.connect(lfoGain);
-                lfoGain.connect(osc.frequency);
-
-                osc.start();
-                lfo.start();
-                oscillators.push(osc);
-                oscillators.push(lfo);
-                gains.push(gain);
-            });
-
-            this.backgroundOscillator = oscillators;
-            this.backgroundGain = gains;
+                    document.addEventListener('click', startOnInteraction);
+                    document.addEventListener('touchstart', startOnInteraction);
+                });
+            }
         } catch (e) {
-            console.log('Background music failed');
+            console.log('Background music failed to start');
         }
     }
 
@@ -547,21 +523,3 @@ retryBtn.addEventListener('click', resetGame);
 
 // Initialize
 renderBoard();
-
-// Make sure background music starts (especially for browsers that don't auto-play)
-window.addEventListener('load', () => {
-    // Try to start background music if not already started
-    setTimeout(() => {
-        if (soundManager.audioContext && soundManager.audioContext.state === 'running' && !soundManager.backgroundOscillator) {
-            soundManager.startBackgroundMusic();
-        }
-    }, 500);
-});
-
-// Resume audio context on user interaction if needed
-document.addEventListener('click', () => {
-    if (soundManager.audioContext && soundManager.audioContext.state === 'suspended') {
-        soundManager.audioContext.resume();
-        soundManager.startBackgroundMusic();
-    }
-}, { once: true });
